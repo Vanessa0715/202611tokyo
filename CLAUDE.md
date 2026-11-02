@@ -32,8 +32,7 @@ VITE_FIREBASE_APP_ID=
 
 | 模組 | 說明 |
 |------|------|
-| 每日行程時間軸 | DAY 1（11/18）～ DAY 5（11/22），可新增/編輯景點、標籤 |
-| 行前夜小卡 | 11/17（Firebase 路徑 `/prep`，跟 `itinerary/day1~5` 分開），**不算 DAY 1～5**——媽媽只是提早去桃園住一晚，不是出國第一天，避免跟旅行社導遊說的天數搞混。顯示在 DAY 選單上方，可收合，新增/編輯/刪除跟每日行程共用同一個 modal |
+| 每日行程時間軸 | 日期選單共 6 張卡：最左邊是「行前夜」（11/17），接著 DAY 1（11/18）～ DAY 5（11/22）。份量/操作跟其他天完全一樣（大圖＋本日行程＋新增/編輯/刪除），只是標籤寫「行前夜」不寫「DAY」——媽媽只是提早去桃園住一晚，不是出國第一天，避免跟旅行社導遊說的天數搞混。資料上行前夜存在 Firebase `/prep`，DAY 1～5 存在 `itinerary/day1~5`，`src/components/Itinerary/index.jsx` 裡的 `SLIDES` 陣列（`[PREP_SLIDE, ...DAY_DATA]`）跟 `pathForSlide()` 負責兩邊切換 |
 | 打包清單（行李） | 共用提醒清單（項目同步、勾選各存各的手機）；項目固定，僅可刪除 |
 | 願望清單（原景點） | 共同許願池：想去想吃的備案小卡，可一鍵排入指定日期的行程（標記「已排入」） |
 
@@ -82,6 +81,10 @@ https://tour.colatour.com.tw/itinerary?TourCode=NTX111805BR6C&TourDate=2026/11/1
 ## App Icon
 
 `public/favicon.svg`、`icon-192.png`、`icon-512.png`、`apple-touch-icon.png` 是東京鐵塔造型（橙白配色），取自 Microsoft Fluent Emoji「🗼」圖案（MIT 授權，來源 Wikimedia Commons），跟 202610nagoya 的鳥居圖示明顯不同，手機桌面不會搞混。
+
+## 配色
+
+主色改成楓紅橙／焦糖金系（`src/index.css` 的 `@theme` 區塊：`--color-sage: #B5542E`、`--color-latte: #B8863B`、`--color-cream: #F5E9DD` 等），跟 202610nagoya 的鼠尾草綠系刻意區隔開，方便一眼分辨兩個 app。Token 名稱（sage/latte/cream/oat/ink）沿用 nagoya 原本的命名沒有改，只是換了色值，之後要調色改這裡的 hex 就好；各元件裡大量用 Tailwind 任意值寫死的 hex（例如 `text-[#43362B]`）也都已經同步換色，不是只改 `@theme`。
 
 ## 本地開發流程
 

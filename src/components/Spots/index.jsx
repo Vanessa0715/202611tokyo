@@ -239,7 +239,7 @@ export default function Spots() {
             {/* Modal header */}
             <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100/80 bg-white/50 shrink-0">
               {editMode ? (
-                <h3 className="font-serif font-bold text-lg tracking-widest text-[#43473F]">
+                <h3 className="font-serif font-bold text-lg tracking-widest text-[#43362B]">
                   {isNew ? '新增願望' : '編輯願望'}
                 </h3>
               ) : (
@@ -259,11 +259,11 @@ export default function Spots() {
               <div className="flex items-center gap-4 shrink-0">
                 {!editMode && viewSpot.id && (
                   <>
-                    <button onClick={startEdit} className="text-xl text-gray-400 hover:text-[#4A4A43] transition-colors" title="編輯">✏️</button>
+                    <button onClick={startEdit} className="text-xl text-gray-400 hover:text-[#43362B] transition-colors" title="編輯">✏️</button>
                     <button onClick={handleDelete} className="text-xl text-gray-400 hover:text-[#B08A8B] transition-colors" title="刪除">🗑️</button>
                   </>
                 )}
-                <button onClick={closeModal} className="text-2xl font-light text-gray-400 hover:text-[#4A4A43] transition-colors leading-none">×</button>
+                <button onClick={closeModal} className="text-2xl font-light text-gray-400 hover:text-[#43362B] transition-colors leading-none">×</button>
               </div>
             </div>
 
@@ -279,7 +279,7 @@ export default function Spots() {
                       onError={e => { e.target.style.display = 'none' }}
                     />
                   )}
-                  <h2 className="font-serif text-[1.6rem] font-bold text-[#43473F] mb-3 leading-snug">
+                  <h2 className="font-serif text-[1.6rem] font-bold text-[#43362B] mb-3 leading-snug">
                     {viewSpot.name}
                   </h2>
 
@@ -292,16 +292,16 @@ export default function Spots() {
 
                   {viewSpot.phone && (
                     <div className="mb-6 bg-white border border-gray-100 p-4 rounded-xl shadow-sm flex items-center gap-4">
-                      <span className="text-[#A5998A] text-xl">📞</span>
+                      <span className="text-[#A68A72] text-xl">📞</span>
                       <div>
-                        <p className="text-[0.55rem] text-[#A5998A] tracking-[0.2em] uppercase mb-0.5 font-bold">Phone / GPS</p>
-                        <p className="font-mono font-bold text-lg text-[#43473F] tracking-wider">{viewSpot.phone}</p>
+                        <p className="text-[0.55rem] text-[#A68A72] tracking-[0.2em] uppercase mb-0.5 font-bold">Phone / GPS</p>
+                        <p className="font-mono font-bold text-lg text-[#43362B] tracking-wider">{viewSpot.phone}</p>
                       </div>
                     </div>
                   )}
 
                   {viewSpot.notes && (
-                    <p className="text-[0.9rem] text-[#6B685C] leading-relaxed mb-6">{viewSpot.notes}</p>
+                    <p className="text-[0.9rem] text-[#7A6150] leading-relaxed mb-6">{viewSpot.notes}</p>
                   )}
 
                   {viewSpot.details && <DetailsText text={viewSpot.details} className="mb-6" />}
@@ -313,7 +313,7 @@ export default function Spots() {
                           href={viewSpot.mapUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex-1 bg-[#6F8172] text-white py-3 rounded-xl text-center text-xs tracking-widest font-bold shadow-md active:opacity-80 transition-opacity"
+                          className="flex-1 bg-[#B5542E] text-white py-3 rounded-xl text-center text-xs tracking-widest font-bold shadow-md active:opacity-80 transition-opacity"
                         >
                           🧭 地圖導航
                         </a>
@@ -323,7 +323,7 @@ export default function Spots() {
                           href={viewSpot.website}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex-1 bg-[#AD8B76] text-white py-3 rounded-xl text-center text-xs tracking-widest font-bold shadow-md active:opacity-80 transition-opacity"
+                          className="flex-1 bg-[#B8863B] text-white py-3 rounded-xl text-center text-xs tracking-widest font-bold shadow-md active:opacity-80 transition-opacity"
                         >
                           🌐 官方網站
                         </a>
@@ -334,7 +334,7 @@ export default function Spots() {
                           href={a.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="basis-full bg-white border border-[#AD8B76] text-[#8A6A4C] py-3 rounded-xl text-center text-xs font-bold shadow-sm active:opacity-80 transition-opacity truncate px-4"
+                          className="basis-full bg-white border border-[#B8863B] text-[#8A6A4C] py-3 rounded-xl text-center text-xs font-bold shadow-sm active:opacity-80 transition-opacity truncate px-4"
                         >
                           📖 {a.title}
                         </a>
@@ -350,7 +350,7 @@ export default function Spots() {
                 >
                   {dayPicker ? (
                     <div className="animate-fade-in">
-                      <p className="text-[0.6rem] text-[#A5998A] tracking-[0.2em] uppercase font-bold mb-2.5 text-center">
+                      <p className="text-[0.6rem] text-[#A68A72] tracking-[0.2em] uppercase font-bold mb-2.5 text-center">
                         要排進哪一天？
                       </p>
                       <div className="grid grid-cols-3 gap-2">
@@ -358,10 +358,10 @@ export default function Spots() {
                           <button
                             key={day}
                             onClick={() => handleAddToDay(day)}
-                            className="border border-[#DED9CF] rounded-xl py-2 px-1 text-center hover:bg-[#F4F1EB] active:scale-95 transition-transform"
+                            className="border border-[#ECD9C8] rounded-xl py-2 px-1 text-center hover:bg-[#FBF3EA] active:scale-95 transition-transform"
                           >
-                            <span className="block text-sm font-bold text-[#43473F]">{date}</span>
-                            <span className="block text-[0.58rem] text-[#A5998A] truncate">{place}</span>
+                            <span className="block text-sm font-bold text-[#43362B]">{date}</span>
+                            <span className="block text-[0.58rem] text-[#A68A72] truncate">{place}</span>
                           </button>
                         ))}
                       </div>
@@ -390,18 +390,18 @@ export default function Spots() {
               <>
                 <div className="flex-1 overflow-y-auto hide-scrollbar px-6 py-6 space-y-5">
                   <div>
-                    <label className="block text-[0.58rem] text-[#6F8172] tracking-[0.2em] uppercase mb-1 font-bold">名稱 *</label>
+                    <label className="block text-[0.58rem] text-[#B5542E] tracking-[0.2em] uppercase mb-1 font-bold">名稱 *</label>
                     <input
                       value={form.name}
                       onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                       placeholder="例：鰻魚飯三吃 あつた蓬萊軒"
                       autoFocus
-                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] font-serif bg-transparent text-base transition-colors"
+                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] font-serif bg-transparent text-base transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[0.58rem] text-[#6F8172] tracking-[0.2em] uppercase mb-2 font-bold">分類（可複選）</label>
+                    <label className="block text-[0.58rem] text-[#B5542E] tracking-[0.2em] uppercase mb-2 font-bold">分類（可複選）</label>
                     <div className="flex flex-wrap gap-2">
                       {SPOT_TAGS.map(tag => (
                         <button
@@ -410,7 +410,7 @@ export default function Spots() {
                           className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${
                             form.tags.includes(tag)
                               ? 'bg-sage text-white border-sage'
-                              : 'border-[#DED9CF] text-stone-500 bg-oat'
+                              : 'border-[#ECD9C8] text-stone-500 bg-oat'
                           }`}
                         >
                           {tag}
@@ -420,87 +420,87 @@ export default function Spots() {
                   </div>
 
                   <div>
-                    <label className="block text-[0.58rem] text-[#6F8172] tracking-[0.2em] uppercase mb-1 font-bold">一句話介紹</label>
+                    <label className="block text-[0.58rem] text-[#B5542E] tracking-[0.2em] uppercase mb-1 font-bold">一句話介紹</label>
                     <input
                       value={form.notes}
                       onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                       placeholder="為什麼想去？顯示在小卡上"
-                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] bg-transparent text-sm transition-colors"
+                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] bg-transparent text-sm transition-colors"
                     />
                   </div>
 
                   <div className="border-t border-dashed border-gray-200" />
 
                   <div>
-                    <label className="block text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">地址</label>
+                    <label className="block text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">地址</label>
                     <input
                       value={form.address}
                       onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
                       placeholder="導航用地址"
-                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] bg-transparent text-sm transition-colors"
+                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] bg-transparent text-sm transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">Google Maps 連結</label>
+                    <label className="block text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">Google Maps 連結</label>
                     <input
                       value={form.mapUrl}
                       onChange={e => setForm(f => ({ ...f, mapUrl: e.target.value }))}
                       placeholder="https://maps.app.goo.gl/..."
-                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] bg-transparent text-sm transition-colors"
+                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] bg-transparent text-sm transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">圖片網址（選填）</label>
+                    <label className="block text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">圖片網址（選填）</label>
                     <input
                       value={form.image}
                       onChange={e => setForm(f => ({ ...f, image: e.target.value }))}
                       placeholder="貼景點照片網址，顯示在彈窗上方"
-                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] bg-transparent text-sm transition-colors"
+                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] bg-transparent text-sm transition-colors"
                     />
                   </div>
 
                   <div className="flex gap-4">
                     <div className="flex-1">
-                      <label className="block text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">電話</label>
+                      <label className="block text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">電話</label>
                       <input
                         value={form.phone}
                         onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
                         placeholder="052-..."
-                        className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] font-mono bg-transparent text-sm transition-colors"
+                        className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] font-mono bg-transparent text-sm transition-colors"
                       />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">官方網站</label>
+                      <label className="block text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">官方網站</label>
                       <input
                         value={form.website}
                         onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
                         placeholder="https://..."
-                        className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] bg-transparent text-sm transition-colors"
+                        className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] bg-transparent text-sm transition-colors"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">參考文章（一行一篇：標題 | 網址）</label>
+                    <label className="block text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">參考文章（一行一篇：標題 | 網址）</label>
                     <textarea
                       rows={3}
                       value={form.articles}
                       onChange={e => setForm(f => ({ ...f, articles: e.target.value }))}
                       placeholder={'河口湖紅葉迴廊散策攻略 | https://...\n只貼網址也可以'}
-                      className="w-full border border-gray-300 p-3 rounded-md outline-none focus:border-[#6F8172] bg-transparent text-sm resize-none transition-colors"
+                      className="w-full border border-gray-300 p-3 rounded-md outline-none focus:border-[#B5542E] bg-transparent text-sm resize-none transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">詳細內文（換行自動分段）</label>
+                    <label className="block text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">詳細內文（換行自動分段）</label>
                     <textarea
                       rows={4}
                       value={form.details}
                       onChange={e => setForm(f => ({ ...f, details: e.target.value }))}
                       placeholder="營業時間、想吃的品項、注意事項⋯"
-                      className="w-full border border-gray-300 p-3 rounded-md outline-none focus:border-[#6F8172] bg-transparent text-sm resize-none transition-colors"
+                      className="w-full border border-gray-300 p-3 rounded-md outline-none focus:border-[#B5542E] bg-transparent text-sm resize-none transition-colors"
                     />
                   </div>
                 </div>
@@ -511,14 +511,14 @@ export default function Spots() {
                 >
                   <button
                     onClick={closeModal}
-                    className="flex-1 py-3.5 bg-[#F4F1EB] text-gray-500 rounded-xl text-xs tracking-widest font-bold uppercase hover:bg-gray-200 transition-colors"
+                    className="flex-1 py-3.5 bg-[#FBF3EA] text-gray-500 rounded-xl text-xs tracking-widest font-bold uppercase hover:bg-gray-200 transition-colors"
                   >
                     取消
                   </button>
                   <button
                     onClick={handleSave}
                     disabled={!form.name.trim()}
-                    className="flex-1 py-3.5 bg-[#6F8172] text-white rounded-xl text-xs tracking-widest font-bold uppercase disabled:opacity-40 shadow-md active:scale-[0.98] transition-transform"
+                    className="flex-1 py-3.5 bg-[#B5542E] text-white rounded-xl text-xs tracking-widest font-bold uppercase disabled:opacity-40 shadow-md active:scale-[0.98] transition-transform"
                   >
                     儲存
                   </button>

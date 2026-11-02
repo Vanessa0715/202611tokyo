@@ -9,7 +9,7 @@ const HEADING =/^\d+[.、）)]\s*[^。]{1,30}$/
 function renderInline(line) {
   return line.split(/(【[^】]*】)/).map((part, i) =>
     part.startsWith('【') && part.endsWith('】')
-      ? <strong key={i} className="font-bold text-[#43473F]">{part}</strong>
+      ? <strong key={i} className="font-bold text-[#43362B]">{part}</strong>
       : part
   )
 }
@@ -35,13 +35,13 @@ export default function DetailsText({ text, className = '' }) {
     } else if (BULLET.test(line)) {
       nodes.push(
         <div key={idx} className={`flex gap-2 ${gap || 'mt-2'}`}>
-          <span className="mt-[0.6em] w-1.5 h-1.5 shrink-0 rounded-full bg-[#C4BCAC]" />
+          <span className="mt-[0.6em] w-1.5 h-1.5 shrink-0 rounded-full bg-[#D6B89C]" />
           <span>{renderInline(line.match(BULLET)[1])}</span>
         </div>
       )
     } else if (HEADING.test(line)) {
       nodes.push(
-        <div key={idx} className={`font-bold text-[#43473F] ${gap || 'mt-2'}`}>{line}</div>
+        <div key={idx} className={`font-bold text-[#43362B] ${gap || 'mt-2'}`}>{line}</div>
       )
     } else {
       nodes.push(<div key={idx} className={gap}>{renderInline(line)}</div>)

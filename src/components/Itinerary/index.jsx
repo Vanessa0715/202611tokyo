@@ -13,16 +13,17 @@ function stayDestination(stay) {
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}`
 }
 
-// 每天的「今晚住宿」直接即時讀 Firebase itinerary/day{n} 裡 tag 為「住宿」的項目，
+// 每天的「今晚住宿」直接即時讀 Firebase 裡 tag 為「住宿」的項目，
 // 不再另外硬編一份飯店清單，行程頁改了住宿，這裡跟工具頁都會自動跟著變。
-function useTonightHotel(dayIndex) {
+// path 是 Firebase 節點路徑，例如 `itinerary/day2` 或 `prep`（11/17 行前夜）
+function useTonightHotel(path) {
   const [hotel, setHotel] = useState(null)
   useEffect(() => {
     let cancelled = false
     let unsub = () => {}
     authReady.then(() => {
       if (cancelled) return
-      const r = ref(db, `itinerary/day${dayIndex + 1}`)
+      const r = ref(db, path)
       unsub = onValue(r, (snap) => {
         const data = snap.val()
         const stay = data && Object.values(data).find(v => v.tag === '住宿')
@@ -30,12 +31,21 @@ function useTonightHotel(dayIndex) {
       }, () => setHotel(null))
     })
     return () => { cancelled = true; unsub() }
-  }, [dayIndex])
+  }, [path])
   return hotel
 }
 
-// 11/17 桃園行前夜不算行程天數（避免跟旅行社導遊說的 DAY 1～5 搞混），
-// 獨立放在 /prep，另外用 PrepNightCard 顯示；這裡只放真正出國的 DAY 1～5（11/18～11/22）
+// 11/17 桃園行前夜是獨立的一張卡（slides[0]），份量跟 DAY 1～5 一樣（大圖＋本日行程），
+// 只是標籤寫「行前夜」不寫「DAY」——媽媽只是提早去桃園住一晚，不是出國第一天，
+// DAY 1～5 要從 11/18 起算，避免跟旅行社導遊說的天數搞混。
+// 資料上 slides[0] 存在 Firebase /prep，slides[1~5]（DAY 1~5）存在 itinerary/day1~5，
+// 索引直接對齊：activeDay===0 時用 /prep，activeDay===N（1~5）時用 itinerary/day{N}。
+const PREP_SLIDE = {
+  week: 'TUE', date: '11/17', subtitle: '桃園', en: 'TAOYUAN', desc: '行前夜，養精蓄銳',
+  image: `${import.meta.env.BASE_URL}images/day1.jpg`,
+  lat: 25.0777, lon: 121.2325, isPrep: true,
+}
+
 const DAY_DATA = [
   { week: 'WED', date: '11/18', subtitle: '成田', en: 'NARITA', desc: '飛抵東京，寺院散策',
     image: `${import.meta.env.BASE_URL}images/day2.jpg`,
@@ -54,6 +64,8 @@ const DAY_DATA = [
     lat: 35.7647, lon: 140.3864 },
 ]
 
+const SLIDES = [PREP_SLIDE, ...DAY_DATA]
+
 const CN_NUMS = ['一', '二', '三', '四', '五', '六']
 const WEEK_CN = { MON: '一', TUE: '二', WED: '三', THU: '四', FRI: '五', SAT: '六', SUN: '日' }
 
@@ -69,12 +81,14 @@ function useNowJST() {
   return now
 }
 
-// 開啟 App 時預設顯示的日期：日本時間落在 2026/11/18～11/22（DAY 1～5）之間就自動定位到當天，
-// 11/17（行前夜）或範圍外一律預設顯示 DAY 1
+// 開啟 App 時預設顯示的日期：日本時間是 2026/11/17 就顯示行前夜（index 0），
+// 11/18～11/22 就顯示對應的 DAY 1～5（index 1～5），範圍外一律預設行前夜
 function getDefaultDay() {
   const jst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }))
-  if (jst.getFullYear() === 2026 && jst.getMonth() === 10 && jst.getDate() >= 18 && jst.getDate() <= 22) {
-    return jst.getDate() - 18
+  if (jst.getFullYear() === 2026 && jst.getMonth() === 10) {
+    const d = jst.getDate()
+    if (d === 17) return 0
+    if (d >= 18 && d <= 22) return d - 17
   }
   return 0
 }
@@ -90,7 +104,7 @@ const getTagStyle = (tag) => {
     午餐:     'text-[#B08A8B] border-[#B08A8B]/40 bg-[#B08A8B]/5',
     晚餐:     'text-[#B08A8B] border-[#B08A8B]/40 bg-[#B08A8B]/5',
     點心:     'text-[#B08A8B] border-[#B08A8B]/40 bg-[#B08A8B]/5',
-    住宿:     'text-[#AD8B76] border-[#AD8B76]/40 bg-[#AD8B76]/5',
+    住宿:     'text-[#B8863B] border-[#B8863B]/40 bg-[#B8863B]/5',
     票券:     'text-[#8A819C] border-[#8A819C]/40 bg-[#8A819C]/5',
     裝備出租: 'text-[#7A9999] border-[#7A9999]/40 bg-[#7A9999]/5',
     教練:     'text-[#7A9999] border-[#7A9999]/40 bg-[#7A9999]/5',
@@ -164,7 +178,7 @@ function WeatherWidget({ lat, lon }) {
 
   if (loading) {
     return (
-      <div className="mx-5 md:mx-0 mb-4 h-20 bg-[#F4F1EB] rounded-xl animate-pulse" />
+      <div className="mx-5 md:mx-0 mb-4 h-20 bg-[#FBF3EA] rounded-xl animate-pulse" />
     )
   }
   if (!data?.hourly || !data?.current_weather) return null
@@ -193,29 +207,29 @@ function WeatherWidget({ lat, lon }) {
       {/* Hourly strip — always visible, tap to toggle detail */}
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full flex justify-between items-center px-4 py-3 bg-[#F4F1EB] rounded-xl border border-[#DED9CF] active:opacity-80 transition-opacity"
+        className="w-full flex justify-between items-center px-4 py-3 bg-[#FBF3EA] rounded-xl border border-[#ECD9C8] active:opacity-80 transition-opacity"
       >
         {slots.map((s, i) => (
           <div key={i} className="flex flex-col items-center gap-1">
-            <span className={`text-[0.58rem] tracking-wider ${i === 0 ? 'text-[#6F8172] font-bold' : 'text-[#A5998A]'}`}>
+            <span className={`text-[0.58rem] tracking-wider ${i === 0 ? 'text-[#B5542E] font-bold' : 'text-[#A68A72]'}`}>
               {s.label}
             </span>
             <span className="text-xl leading-none">{s.emoji}</span>
-            <span className={`text-sm font-bold leading-none ${i === 0 ? 'text-[#43473F]' : 'text-[#6B685C]'}`}>
+            <span className={`text-sm font-bold leading-none ${i === 0 ? 'text-[#43362B]' : 'text-[#7A6150]'}`}>
               {s.temp}°
             </span>
           </div>
         ))}
-        <span className="text-[#C5BAA8] text-xs ml-1">{open ? '▲' : '▼'}</span>
+        <span className="text-[#D1B294] text-xs ml-1">{open ? '▲' : '▼'}</span>
       </button>
 
       {/* Expandable outfit guide */}
       {open && (
-        <div className="mt-1.5 flex items-start gap-3 bg-[#F4F1EB] border border-[#DED9CF] rounded-xl px-4 py-3 animate-fade-in">
+        <div className="mt-1.5 flex items-start gap-3 bg-[#FBF3EA] border border-[#ECD9C8] rounded-xl px-4 py-3 animate-fade-in">
           <span className="text-2xl mt-0.5 shrink-0">{outfit.icon}</span>
           <div>
-            <p className="text-[0.52rem] text-[#A5998A] tracking-[0.2em] uppercase font-bold mb-1">Outfit Guide</p>
-            <p className="text-[0.82rem] text-[#6B685C] leading-relaxed">{outfit.text}</p>
+            <p className="text-[0.52rem] text-[#A68A72] tracking-[0.2em] uppercase font-bold mb-1">Outfit Guide</p>
+            <p className="text-[0.82rem] text-[#7A6150] leading-relaxed">{outfit.text}</p>
           </div>
         </div>
       )}
@@ -276,87 +290,38 @@ function itemToForm(item) {
   }
 }
 
-// 11/17 行前夜：不算 DAY 1～5，獨立放在最上面的小卡，資料存在 Firebase /prep，
-// 跟每日行程共用同一個檢視/新增/編輯 modal（openView/openNew 的 source 參數傳 'prep'）
-function PrepNightCard({ items, loading, onOpen, onNew }) {
-  const [open, setOpen] = useState(false)
 
-  return (
-    <div className="mx-5 md:mx-8 mt-4 mb-1">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex justify-between items-center px-4 py-3 bg-[#F4F1EB] rounded-xl border border-[#DED9CF] active:opacity-80 transition-opacity"
-      >
-        <span className="text-sm font-bold text-[#43473F] tracking-wide">🛫 11/17 行前夜</span>
-        <span className="flex items-center gap-2 text-[0.7rem] text-[#A5998A]">
-          {loading ? '' : `${items.length} 筆`}
-          <span className="text-[#C5BAA8]">{open ? '▲' : '▼'}</span>
-        </span>
-      </button>
-      {open && (
-        <div className="mt-1.5 bg-[#F4F1EB] border border-[#DED9CF] rounded-xl p-3 animate-fade-in space-y-2">
-          {loading ? (
-            <p className="text-center text-stone-300 text-xs py-4">載入中⋯</p>
-          ) : items.length === 0 ? (
-            <p className="text-center text-stone-300 text-xs py-4">還沒有行前夜的安排</p>
-          ) : (
-            items.map(item => (
-              <button
-                key={item.id}
-                onClick={() => onOpen(item, 'prep')}
-                className="w-full flex items-center gap-3 bg-oat rounded-lg px-3 py-2.5 shadow-sm border border-[#E2DCD1] text-left active:scale-[0.98] transition-transform"
-              >
-                <span className="text-[0.78rem] font-bold text-[#4A4A43] font-mono shrink-0">{item.time || '--:--'}</span>
-                <span className="flex-1 min-w-0 text-[0.82rem] text-[#43473F] truncate">{item.title}</span>
-                {item.tag && (
-                  <span className={`text-[0.55rem] tracking-widest px-1.5 py-[1px] rounded-[3px] border shrink-0 ${getTagStyle(item.tag)}`}>
-                    {item.tag}
-                  </span>
-                )}
-              </button>
-            ))
-          )}
-          <button
-            onClick={() => onNew('prep')}
-            className="w-full py-2 border border-dashed border-[#C4BCAC] text-[#A5998A] rounded-lg text-xs tracking-widest hover:bg-white transition-colors"
-          >
-            + 新增行前夜安排
-          </button>
-        </div>
-      )}
-    </div>
-  )
+// activeDay===0（行前夜 11/17）用 /prep，activeDay===N（DAY N，1～5）用 itinerary/day{N}
+function pathForSlide(activeDay) {
+  return activeDay === 0 ? 'prep' : `itinerary/day${activeDay}`
 }
 
 export default function Itinerary() {
   const [activeDay, setActiveDay] = useState(getDefaultDay)
-  const { items, loading, add, update, del } = useItems(`itinerary/day${activeDay + 1}`)
-  const prep = useItems('prep')  // 11/17 行前夜，獨立於 DAY 1～5 之外
+  const { items, loading, add, update, del } = useItems(pathForSlide(activeDay))
 
-  const [viewItem, setViewItem]   = useState(null)  // null = modal關閉
+  const [viewItem, setViewItem]   = useState(null)  // null = modal 關閉
   const [editMode, setEditMode]   = useState(false)  // true = edit form visible
   const [isNew, setIsNew]         = useState(false)
   const [form, setForm]           = useState(EMPTY_FORM)
-  const [viewSource, setViewSource] = useState('day')  // 'day' | 'prep'：目前檢視/編輯的項目屬於哪個集合
 
-  const day = DAY_DATA[activeDay]
+  const day = SLIDES[activeDay]
+  const isPrep = activeDay === 0
 
-  const openView  = (item, source = 'day') => { setViewItem(item); setEditMode(false); setIsNew(false); setViewSource(source) }
+  const openView  = (item) => { setViewItem(item); setEditMode(false); setIsNew(false) }
   const startEdit = ()     => { setForm(itemToForm(viewItem)); setEditMode(true) }
-  const openNew   = (source = 'day') => { setViewItem({}); setForm(EMPTY_FORM); setEditMode(true); setIsNew(true); setViewSource(source) }
+  const openNew   = ()     => { setViewItem({}); setForm(EMPTY_FORM); setEditMode(true); setIsNew(true) }
   const closeModal = ()    => { setViewItem(null); setEditMode(false); setIsNew(false) }
 
   const handleSave = async () => {
     if (!form.title.trim()) return
-    const { add: addFn, update: updateFn } = viewSource === 'prep' ? prep : { add, update }
-    if (isNew) { await addFn(form) } else { await updateFn(viewItem.id, form) }
+    if (isNew) { await add(form) } else { await update(viewItem.id, form) }
     closeModal()
   }
 
   const handleDelete = async () => {
     if (!window.confirm('確定要刪除這個行程嗎？')) return
-    const delFn = viewSource === 'prep' ? prep.del : del
-    await delFn(viewItem.id)
+    await del(viewItem.id)
     closeModal()
   }
 
@@ -366,8 +331,9 @@ export default function Itinerary() {
   // 浮動卡跟著日本時間走：檢視的分頁是「今天」時，顯示當前／下一筆行程
   const nowJST = useNowJST()
   const hhmm = `${String(nowJST.getHours()).padStart(2, '0')}:${String(nowJST.getMinutes()).padStart(2, '0')}`
+  const activeDate = activeDay === 0 ? 17 : activeDay + 17
   const isToday =
-    nowJST.getFullYear() === 2026 && nowJST.getMonth() === 10 && nowJST.getDate() === activeDay + 18
+    nowJST.getFullYear() === 2026 && nowJST.getMonth() === 10 && nowJST.getDate() === activeDate
   let curIdx = 0
   if (isToday && items.length > 0) {
     const passed = items.filter(it => (it.time || '00:00') <= hhmm).length
@@ -377,12 +343,13 @@ export default function Itinerary() {
   const nextItem = items[curIdx + 1]
 
   // 「今晚住宿」：行程期間以日本日期為準（清晨 6 點前算前一晚），期間外看目前檢視的天
-  let hotelIdx = activeDay
+  let hotelSlide = activeDay
   if (nowJST.getFullYear() === 2026 && nowJST.getMonth() === 10) {
     const d = nowJST.getDate() - (nowJST.getHours() < 6 ? 1 : 0)
-    if (d >= 18 && d <= 22) hotelIdx = d - 18
+    if (d === 17) hotelSlide = 0
+    else if (d >= 18 && d <= 22) hotelSlide = d - 17
   }
-  const hotel = useTonightHotel(hotelIdx)
+  const hotel = useTonightHotel(pathForSlide(hotelSlide))
 
   // 本日行程區塊左右滑動換天：偏水平方向的滑動才觸發，避免跟上下捲動清單衝突
   const touchStartRef = useRef({ x: 0, y: 0 })
@@ -395,7 +362,7 @@ export default function Itinerary() {
     const dx = t.clientX - touchStartRef.current.x
     const dy = t.clientY - touchStartRef.current.y
     if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return
-    if (dx < 0 && activeDay < DAY_DATA.length - 1) setActiveDay(activeDay + 1)
+    if (dx < 0 && activeDay < SLIDES.length - 1) setActiveDay(activeDay + 1)
     else if (dx > 0 && activeDay > 0) setActiveDay(activeDay - 1)
   }
 
@@ -427,25 +394,22 @@ export default function Itinerary() {
 
   return (
     <div>
-      {/* 行前夜（11/17，不算 DAY 1～5） */}
-      <PrepNightCard items={prep.items} loading={prep.loading} onOpen={openView} onNew={openNew} />
-
-      {/* Day selector */}
-      <div ref={daySelectorRef} className="sticky top-[94px] md:top-[72px] z-20 bg-cream border-b border-[#D6D0C4]">
+      {/* Day selector（含行前夜，index 0） */}
+      <div ref={daySelectorRef} className="sticky top-[94px] md:top-[72px] z-20 bg-cream border-b border-[#E3CFBE]">
         <div className="flex gap-1.5 md:gap-2 md:max-w-lg md:mx-auto px-5 py-3">
-          {DAY_DATA.map((d, i) => (
+          {SLIDES.map((d, i) => (
             <button
               key={i}
               onClick={() => setActiveDay(i)}
               className={`flex-1 flex flex-col items-center rounded-xl py-1.5 transition-all active:scale-95 ${
                 activeDay === i
-                  ? 'bg-sage text-oat shadow-[0_4px_10px_-4px_rgba(111,129,114,0.55)]'
-                  : 'text-[#A8A296]'
+                  ? 'bg-sage text-oat shadow-[0_4px_10px_-4px_rgba(181,84,46,0.55)]'
+                  : 'text-[#B8A696]'
               }`}
             >
               <span className="text-[0.6rem] tracking-wider leading-tight">{d.date.replace('/0', '/')}</span>
               <span className={`text-sm leading-tight ${activeDay === i ? 'font-bold' : 'font-medium'}`}>
-                {WEEK_CN[d.week]}
+                {d.isPrep ? '行前' : WEEK_CN[d.week]}
               </span>
             </button>
           ))}
@@ -459,13 +423,13 @@ export default function Itinerary() {
       <div className="px-5 md:px-0 py-4 md:pt-0 flex gap-4 items-stretch h-52 md:h-80">
         <div className="flex items-center justify-center w-6 shrink-0">
           <span
-            className="font-serif text-[1.1rem] font-bold tracking-widest text-[#43473F]"
+            className="font-serif text-[1.1rem] font-bold tracking-widest text-[#43362B]"
             style={{ writingMode: 'vertical-rl', textOrientation: 'upright' }}
           >
-            第{CN_NUMS[activeDay]}天
+            {isPrep ? '行前夜' : `第${CN_NUMS[activeDay - 1]}天`}
           </span>
         </div>
-        <div className="relative flex-1 rounded-xl overflow-hidden shadow-sm bg-[#DED9CF]">
+        <div className="relative flex-1 rounded-xl overflow-hidden shadow-sm bg-[#ECD9C8]">
           <img
             src={day.image}
             alt={day.subtitle}
@@ -476,7 +440,7 @@ export default function Itinerary() {
           <div className="absolute bottom-4 left-4 right-4 text-white">
             <div className="flex items-center gap-2 mb-1.5">
               <span className="border border-white/60 px-1.5 py-0.5 text-[0.52rem] tracking-widest bg-black/20">
-                DAY {activeDay + 1}
+                {isPrep ? '行前夜' : `DAY ${activeDay}`}
               </span>
               <span className="text-[0.58rem] tracking-widest opacity-90">📍 {day.subtitle}</span>
             </div>
@@ -500,9 +464,9 @@ export default function Itinerary() {
       >
         {/* Section header */}
         <div className="flex items-baseline gap-2.5 pt-4">
-          <span className="font-serif text-[0.95rem] font-bold tracking-widest text-[#43473F]">本日行程</span>
+          <span className="font-serif text-[0.95rem] font-bold tracking-widest text-[#43362B]">本日行程</span>
           <span className="text-[0.55rem] tracking-[0.25em] text-latte font-bold">{day.en}</span>
-          <div className="flex-1 border-t border-[#D8CEB9] self-center" />
+          <div className="flex-1 border-t border-[#E6D2BC] self-center" />
         </div>
         {loading ? (
           <div className="text-center text-gray-300 py-16 text-sm tracking-widest">Loading...</div>
@@ -521,15 +485,15 @@ export default function Itinerary() {
                 onClick={() => openView(item)}
               >
                 <div className="w-16 text-right pr-4 pt-1 shrink-0">
-                  <span className="text-[1.05rem] font-bold tracking-wider text-[#4A4A43]">
+                  <span className="text-[1.05rem] font-bold tracking-wider text-[#43362B]">
                     {item.time || '--:--'}
                   </span>
                 </div>
                 <div className="relative w-4 flex justify-center shrink-0">
                   {i < items.length - 1 && (
-                    <div className="absolute top-3 bottom-[-40px] w-0 border-l-2 border-dotted border-[#AEBBAF]" />
+                    <div className="absolute top-3 bottom-[-40px] w-0 border-l-2 border-dotted border-[#E0C4A8]" />
                   )}
-                  <div className="w-[7px] h-[7px] rounded-full bg-sage mt-[9px] z-10 border-2 border-[#E9E5DE] shadow-[0_0_0_1.5px_#CBD2C9] group-hover:scale-125 transition-transform" />
+                  <div className="w-[7px] h-[7px] rounded-full bg-sage mt-[9px] z-10 border-2 border-[#F5E9DD] shadow-[0_0_0_1.5px_#E6CDB4] group-hover:scale-125 transition-transform" />
                 </div>
                 <div className={`flex-1 pl-4 relative overflow-hidden ${item.image ? 'pb-16' : 'pb-2'}`}>
                   {item.tag && TAG_DECOR[item.tag] && (
@@ -549,7 +513,7 @@ export default function Itinerary() {
                     />
                   )}
                   <div className="relative">
-                    <h4 className="font-serif text-[1.15rem] font-bold text-[#43473F] leading-tight mb-2 tracking-wide">
+                    <h4 className="font-serif text-[1.15rem] font-bold text-[#43362B] leading-tight mb-2 tracking-wide">
                       {item.title}
                     </h4>
                     {item.tag && (
@@ -558,7 +522,7 @@ export default function Itinerary() {
                       </span>
                     )}
                     {item.notes && (
-                      <p className="text-[0.82rem] text-[#6B685C] mt-2 whitespace-pre-line">{item.notes}</p>
+                      <p className="text-[0.82rem] text-[#7A6150] mt-2 whitespace-pre-line">{item.notes}</p>
                     )}
                   </div>
                 </div>
@@ -568,8 +532,8 @@ export default function Itinerary() {
         )}
 
         <button
-          onClick={() => openNew('day')}
-          className="w-full py-3 border border-dashed border-[#C4BCAC] text-[#A5998A] rounded-xl text-sm tracking-widest flex items-center justify-center gap-2 hover:bg-[#F4F1EB] transition-colors mt-2"
+          onClick={openNew}
+          className="w-full py-3 border border-dashed border-[#D6B89C] text-[#A68A72] rounded-xl text-sm tracking-widest flex items-center justify-center gap-2 hover:bg-[#FBF3EA] transition-colors mt-2"
         >
           + 新增行程
         </button>
@@ -579,7 +543,7 @@ export default function Itinerary() {
       {/* Floating bottom card */}
       {!loading && items.length > 0 && (
         <div className="fixed bottom-[84px] md:bottom-6 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-2xl px-4 z-20 pointer-events-none">
-          <div className="bg-oat/95 backdrop-blur-md border border-[#D6D0C4] rounded-xl shadow-[0_10px_26px_-10px_rgba(60,50,30,0.4)] p-3 flex items-stretch pointer-events-auto">
+          <div className="bg-oat/95 backdrop-blur-md border border-[#E3CFBE] rounded-xl shadow-[0_10px_26px_-10px_rgba(60,50,30,0.4)] p-3 flex items-stretch pointer-events-auto">
             {/* 回宿：一鍵導航到今晚住宿 */}
             {hotel ? (
               <a
@@ -587,15 +551,15 @@ export default function Itinerary() {
                 target="_blank"
                 rel="noreferrer"
                 title={`導航到 ${hotel.name}`}
-                className="flex flex-col items-center justify-center px-3 border-r border-[#DED9CF] shrink-0 active:opacity-70 transition-opacity"
+                className="flex flex-col items-center justify-center px-3 border-r border-[#ECD9C8] shrink-0 active:opacity-70 transition-opacity"
               >
                 <BedDouble size={19} strokeWidth={1.8} className="text-sage mb-1" />
                 <span className="text-[0.5rem] text-sage font-bold tracking-widest leading-none mt-0.5">回宿</span>
               </a>
             ) : (
-              <div className="flex flex-col items-center justify-center px-3 border-r border-[#DED9CF] shrink-0">
-                <BedDouble size={19} strokeWidth={1.8} className="text-[#C4BCAC] mb-1" />
-                <span className="text-[0.5rem] text-[#C4BCAC] font-bold tracking-widest leading-none mt-0.5">回程</span>
+              <div className="flex flex-col items-center justify-center px-3 border-r border-[#ECD9C8] shrink-0">
+                <BedDouble size={19} strokeWidth={1.8} className="text-[#D6B89C] mb-1" />
+                <span className="text-[0.5rem] text-[#D6B89C] font-bold tracking-widest leading-none mt-0.5">回程</span>
               </div>
             )}
             {/* Current event（今天時跟著日本時間走） */}
@@ -604,12 +568,12 @@ export default function Itinerary() {
               onClick={() => openView(curItem)}
             >
               <div className="flex items-center gap-2 mb-1">
-                <span className="font-serif text-xl font-bold text-[#43473F] leading-none">{curItem.time || '--:--'}</span>
-                <span className="text-[0.5rem] border border-[#C4BCAC] text-latte px-1.5 py-0.5 rounded tracking-widest shrink-0">
+                <span className="font-serif text-xl font-bold text-[#43362B] leading-none">{curItem.time || '--:--'}</span>
+                <span className="text-[0.5rem] border border-[#D6B89C] text-latte px-1.5 py-0.5 rounded tracking-widest shrink-0">
                   {isToday ? `現在 JST ${hhmm}` : '行程預覽'}
                 </span>
               </div>
-              <p className="font-serif font-bold text-[#43473F] text-[0.88rem] truncate mb-0.5">{curItem.title}</p>
+              <p className="font-serif font-bold text-[#43362B] text-[0.88rem] truncate mb-0.5">{curItem.title}</p>
               {nextItem && (
                 <p className="text-[0.62rem] text-gray-500 truncate flex items-center gap-1">
                   <span className="text-gray-400">→</span> {nextItem.title}
@@ -619,14 +583,14 @@ export default function Itinerary() {
             {/* Next time */}
             {nextItem && (
               <div
-                className="flex flex-col items-center justify-center px-3 border-l border-[#DED9CF] shrink-0 min-w-[64px] cursor-pointer active:opacity-70 transition-opacity"
+                className="flex flex-col items-center justify-center px-3 border-l border-[#ECD9C8] shrink-0 min-w-[64px] cursor-pointer active:opacity-70 transition-opacity"
                 onClick={() => openView(nextItem)}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6B685C" strokeWidth="2" className="mb-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7A6150" strokeWidth="2" className="mb-1">
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
-                <span className="font-serif font-bold text-[#43473F] text-base leading-none">{nextItem.time || '--:--'}</span>
+                <span className="font-serif font-bold text-[#43362B] text-base leading-none">{nextItem.time || '--:--'}</span>
                 <span className="text-[0.5rem] text-gray-500 tracking-widest mt-1">下個時間</span>
               </div>
             )}
@@ -648,7 +612,7 @@ export default function Itinerary() {
             {/* Modal header */}
             <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100/80 bg-white/50 shrink-0">
               {editMode ? (
-                <h3 className="font-serif font-bold text-lg tracking-widest text-[#43473F]">
+                <h3 className="font-serif font-bold text-lg tracking-widest text-[#43362B]">
                   {isNew ? '新增行程' : '編輯行程'}
                 </h3>
               ) : (
@@ -666,11 +630,11 @@ export default function Itinerary() {
               <div className="flex items-center gap-4">
                 {!editMode && viewItem.id && (
                   <>
-                    <button onClick={startEdit} className="text-xl text-gray-400 hover:text-[#4A4A43] transition-colors" title="編輯">✏️</button>
+                    <button onClick={startEdit} className="text-xl text-gray-400 hover:text-[#43362B] transition-colors" title="編輯">✏️</button>
                     <button onClick={handleDelete} className="text-xl text-gray-400 hover:text-[#B08A8B] transition-colors" title="刪除">🗑️</button>
                   </>
                 )}
-                <button onClick={closeModal} className="text-2xl font-light text-gray-400 hover:text-[#4A4A43] transition-colors leading-none">×</button>
+                <button onClick={closeModal} className="text-2xl font-light text-gray-400 hover:text-[#43362B] transition-colors leading-none">×</button>
               </div>
             </div>
 
@@ -692,7 +656,7 @@ export default function Itinerary() {
                     onError={e => { e.target.style.display = 'none' }}
                   />
                 )}
-                <h2 className="font-serif text-[1.6rem] font-bold text-[#43473F] mb-3 leading-snug">
+                <h2 className="font-serif text-[1.6rem] font-bold text-[#43362B] mb-3 leading-snug">
                   {viewItem.title}
                 </h2>
 
@@ -704,13 +668,13 @@ export default function Itinerary() {
                 )}
 
                 {viewItem.reservationNo && (
-                  <div className="mb-8 bg-[#F4F1EB] border border-[#DED9CF] p-5 rounded-xl shadow-sm relative overflow-hidden">
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C4BCAC]" />
-                    <p className="text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase font-bold mb-2">Reservation</p>
-                    <p className="font-serif font-bold text-lg text-[#43473F]">{viewItem.title}</p>
-                    <div className="border-t border-dashed border-[#DED9CF] pt-4 mt-4 relative pb-2">
-                      <p className="text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">Confirmation No.</p>
-                      <p className="font-mono text-xl font-bold text-[#4A4A43] tracking-widest">{viewItem.reservationNo}</p>
+                  <div className="mb-8 bg-[#FBF3EA] border border-[#ECD9C8] p-5 rounded-xl shadow-sm relative overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#D6B89C]" />
+                    <p className="text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase font-bold mb-2">Reservation</p>
+                    <p className="font-serif font-bold text-lg text-[#43362B]">{viewItem.title}</p>
+                    <div className="border-t border-dashed border-[#ECD9C8] pt-4 mt-4 relative pb-2">
+                      <p className="text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">Confirmation No.</p>
+                      <p className="font-mono text-xl font-bold text-[#43362B] tracking-widest">{viewItem.reservationNo}</p>
                       <div className="stamp-tag">訂單代號</div>
                     </div>
                   </div>
@@ -718,11 +682,11 @@ export default function Itinerary() {
 
                 {viewItem.tag === '住宿' && (
                   <div className="mb-8 bg-white border border-gray-100 p-4 rounded-xl shadow-sm">
-                    <p className="text-[0.58rem] text-[#AD8B76] tracking-[0.2em] uppercase font-bold mb-3">住宿憑證（Vouchers）</p>
+                    <p className="text-[0.58rem] text-[#B8863B] tracking-[0.2em] uppercase font-bold mb-3">住宿憑證（Vouchers）</p>
                     <p className="text-[0.78rem] text-gray-400 text-center py-3 italic">尚未上傳憑證</p>
                     <button
                       onClick={() => alert('PDF 上傳功能即將推出，請先將訂房確認信儲存於手機相簿 🙏')}
-                      className="w-full mt-1 py-2.5 border border-dashed border-[#C4BCAC] text-[#A5998A] rounded-xl text-[0.75rem] tracking-widest hover:bg-[#F4F1EB] transition-colors"
+                      className="w-full mt-1 py-2.5 border border-dashed border-[#D6B89C] text-[#A68A72] rounded-xl text-[0.75rem] tracking-widest hover:bg-[#FBF3EA] transition-colors"
                     >
                       ＋ 上傳 PDF
                     </button>
@@ -731,24 +695,24 @@ export default function Itinerary() {
 
                 {(viewItem.phone || viewItem.notes || viewItem.details) && (
                   <div className="flex items-center gap-2 mb-5">
-                    <span className="text-[#A5998A] text-xs">ⓘ</span>
-                    <span className="text-[0.6rem] text-[#A5998A] tracking-[0.2em] uppercase font-bold">關於此處（About）</span>
+                    <span className="text-[#A68A72] text-xs">ⓘ</span>
+                    <span className="text-[0.6rem] text-[#A68A72] tracking-[0.2em] uppercase font-bold">關於此處（About）</span>
                     <div className="flex-1 h-[1px] bg-gray-100" />
                   </div>
                 )}
 
                 {viewItem.phone && (
                   <div className="mb-6 bg-white border border-gray-100 p-4 rounded-xl shadow-sm flex items-center gap-4">
-                    <span className="text-[#A5998A] text-xl">📞</span>
+                    <span className="text-[#A68A72] text-xl">📞</span>
                     <div>
-                      <p className="text-[0.55rem] text-[#A5998A] tracking-[0.2em] uppercase mb-0.5 font-bold">Phone / GPS</p>
-                      <p className="font-mono font-bold text-lg text-[#43473F] tracking-wider">{viewItem.phone}</p>
+                      <p className="text-[0.55rem] text-[#A68A72] tracking-[0.2em] uppercase mb-0.5 font-bold">Phone / GPS</p>
+                      <p className="font-mono font-bold text-lg text-[#43362B] tracking-wider">{viewItem.phone}</p>
                     </div>
                   </div>
                 )}
 
                 {viewItem.notes && (
-                  <p className="text-[0.9rem] text-[#6B685C] leading-relaxed mb-6 whitespace-pre-line">{viewItem.notes}</p>
+                  <p className="text-[0.9rem] text-[#7A6150] leading-relaxed mb-6 whitespace-pre-line">{viewItem.notes}</p>
                 )}
 
                 {viewItem.details && <DetailsText text={viewItem.details} />}
@@ -760,20 +724,20 @@ export default function Itinerary() {
               <div className="flex-1 overflow-y-auto hide-scrollbar px-6 py-6 space-y-5">
                 <div className="flex gap-4">
                   <div className="w-1/3">
-                    <label className="block text-[0.58rem] text-[#6F8172] tracking-[0.2em] uppercase mb-1 font-bold">時間</label>
+                    <label className="block text-[0.58rem] text-[#B5542E] tracking-[0.2em] uppercase mb-1 font-bold">時間</label>
                     <input
                       type="time"
                       value={form.time}
                       onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
-                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] font-mono bg-transparent text-lg transition-colors"
+                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] font-mono bg-transparent text-lg transition-colors"
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-[0.58rem] text-[#6F8172] tracking-[0.2em] uppercase mb-1 font-bold">標籤</label>
+                    <label className="block text-[0.58rem] text-[#B5542E] tracking-[0.2em] uppercase mb-1 font-bold">標籤</label>
                     <select
                       value={form.tag}
                       onChange={e => setForm(f => ({ ...f, tag: e.target.value }))}
-                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] bg-transparent text-base transition-colors"
+                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] bg-transparent text-base transition-colors"
                     >
                       {TAGS.map(t => <option key={t}>{t}</option>)}
                     </select>
@@ -781,109 +745,109 @@ export default function Itinerary() {
                 </div>
 
                 <div>
-                  <label className="block text-[0.58rem] text-[#6F8172] tracking-[0.2em] uppercase mb-1 font-bold">標題 *</label>
+                  <label className="block text-[0.58rem] text-[#B5542E] tracking-[0.2em] uppercase mb-1 font-bold">標題 *</label>
                   <input
                     value={form.title}
                     onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                     placeholder="例：午餐：飛驒牛炸牛排"
                     autoFocus
-                    className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] font-serif bg-transparent text-base transition-colors"
+                    className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] font-serif bg-transparent text-base transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[0.58rem] text-[#6F8172] tracking-[0.2em] uppercase mb-1 font-bold">列表簡介（可換行）</label>
+                  <label className="block text-[0.58rem] text-[#B5542E] tracking-[0.2em] uppercase mb-1 font-bold">列表簡介（可換行）</label>
                   <textarea
                     rows={2}
                     value={form.notes}
                     onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                     placeholder="顯示在時間軸上的說明"
-                    className="w-full border border-gray-300 p-3 rounded-md outline-none focus:border-[#6F8172] bg-transparent text-sm resize-none transition-colors"
+                    className="w-full border border-gray-300 p-3 rounded-md outline-none focus:border-[#B5542E] bg-transparent text-sm resize-none transition-colors"
                   />
                 </div>
 
                 <div className="border-t border-dashed border-gray-200" />
 
                 <div>
-                  <label className="block text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">地址</label>
+                  <label className="block text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">地址</label>
                   <input
                     value={form.address}
                     onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
                     placeholder="導航用地址"
-                    className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] bg-transparent text-sm transition-colors"
+                    className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] bg-transparent text-sm transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">Google Maps 連結</label>
+                  <label className="block text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">Google Maps 連結</label>
                   <input
                     value={form.mapUrl}
                     onChange={e => setForm(f => ({ ...f, mapUrl: e.target.value }))}
                     placeholder="https://maps.app.goo.gl/..."
-                    className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] bg-transparent text-sm transition-colors"
+                    className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] bg-transparent text-sm transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">圖片網址（選填）</label>
+                  <label className="block text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">圖片網址（選填）</label>
                   <input
                     value={form.image}
                     onChange={e => setForm(f => ({ ...f, image: e.target.value }))}
                     placeholder="貼景點照片網址，顯示在彈窗上方"
-                    className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] bg-transparent text-sm transition-colors"
+                    className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] bg-transparent text-sm transition-colors"
                   />
                 </div>
 
                 <div className="flex gap-4">
                   <div className="flex-1">
-                    <label className="block text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">電話</label>
+                    <label className="block text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">電話</label>
                     <input
                       value={form.phone}
                       onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
                       placeholder="0577-..."
-                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] font-mono bg-transparent text-sm transition-colors"
+                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] font-mono bg-transparent text-sm transition-colors"
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">預約代號</label>
+                    <label className="block text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">預約代號</label>
                     <input
                       value={form.reservationNo}
                       onChange={e => setForm(f => ({ ...f, reservationNo: e.target.value }))}
                       placeholder="無可留空"
-                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] font-mono bg-transparent text-sm transition-colors"
+                      className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] font-mono bg-transparent text-sm transition-colors"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">官方網站</label>
+                  <label className="block text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">官方網站</label>
                   <input
                     value={form.website}
                     onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
                     placeholder="https://..."
-                    className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#6F8172] bg-transparent text-sm transition-colors"
+                    className="w-full border-b border-gray-300 p-2 outline-none focus:border-[#B5542E] bg-transparent text-sm transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">參考文章（一行一篇：標題 | 網址）</label>
+                  <label className="block text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">參考文章（一行一篇：標題 | 網址）</label>
                   <textarea
                     rows={3}
                     value={form.articles}
                     onChange={e => setForm(f => ({ ...f, articles: e.target.value }))}
                     placeholder={'河口湖紅葉迴廊散策攻略 | https://...\n只貼網址也可以'}
-                    className="w-full border border-gray-300 p-3 rounded-md outline-none focus:border-[#6F8172] bg-transparent text-sm resize-none transition-colors"
+                    className="w-full border border-gray-300 p-3 rounded-md outline-none focus:border-[#B5542E] bg-transparent text-sm resize-none transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[0.58rem] text-[#A5998A] tracking-[0.2em] uppercase mb-1 font-bold">詳細內文（換行自動分段）</label>
+                  <label className="block text-[0.58rem] text-[#A68A72] tracking-[0.2em] uppercase mb-1 font-bold">詳細內文（換行自動分段）</label>
                   <textarea
                     rows={4}
                     value={form.details}
                     onChange={e => setForm(f => ({ ...f, details: e.target.value }))}
                     placeholder="輸入詳細介紹或筆記..."
-                    className="w-full border border-gray-300 p-3 rounded-md outline-none focus:border-[#6F8172] bg-transparent text-sm resize-none transition-colors"
+                    className="w-full border border-gray-300 p-3 rounded-md outline-none focus:border-[#B5542E] bg-transparent text-sm resize-none transition-colors"
                   />
                 </div>
               </div>
@@ -900,7 +864,7 @@ export default function Itinerary() {
                     href={viewItem.mapUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="block w-full bg-[#6F8172] text-white py-3.5 rounded text-center text-sm tracking-widest font-bold shadow-md active:opacity-80 transition-opacity"
+                    className="block w-full bg-[#B5542E] text-white py-3.5 rounded text-center text-sm tracking-widest font-bold shadow-md active:opacity-80 transition-opacity"
                   >
                     🧭 Google Maps 導航
                   </a>
@@ -910,7 +874,7 @@ export default function Itinerary() {
                     href={viewItem.website}
                     target="_blank"
                     rel="noreferrer"
-                    className="block w-full bg-[#AD8B76] text-white py-3.5 rounded text-center text-sm tracking-widest font-bold shadow-md active:opacity-80 transition-opacity"
+                    className="block w-full bg-[#B8863B] text-white py-3.5 rounded text-center text-sm tracking-widest font-bold shadow-md active:opacity-80 transition-opacity"
                   >
                     🌐 官方網站
                   </a>
@@ -921,7 +885,7 @@ export default function Itinerary() {
                     href={a.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="block w-full bg-white border border-[#AD8B76] text-[#8A6A4C] py-3 rounded text-center text-sm font-bold shadow-sm active:opacity-80 transition-opacity truncate px-4"
+                    className="block w-full bg-white border border-[#B8863B] text-[#8A6A4C] py-3 rounded text-center text-sm font-bold shadow-sm active:opacity-80 transition-opacity truncate px-4"
                   >
                     📖 {a.title}
                   </a>
@@ -937,14 +901,14 @@ export default function Itinerary() {
               >
                 <button
                   onClick={closeModal}
-                  className="flex-1 py-3.5 bg-[#F4F1EB] text-gray-500 rounded-xl text-xs tracking-widest font-bold uppercase hover:bg-gray-200 transition-colors"
+                  className="flex-1 py-3.5 bg-[#FBF3EA] text-gray-500 rounded-xl text-xs tracking-widest font-bold uppercase hover:bg-gray-200 transition-colors"
                 >
                   取消
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={!form.title.trim()}
-                  className="flex-1 py-3.5 bg-[#6F8172] text-white rounded-xl text-xs tracking-widest font-bold uppercase disabled:opacity-40 shadow-md active:scale-[0.98] transition-transform"
+                  className="flex-1 py-3.5 bg-[#B5542E] text-white rounded-xl text-xs tracking-widest font-bold uppercase disabled:opacity-40 shadow-md active:scale-[0.98] transition-transform"
                 >
                   儲存
                 </button>

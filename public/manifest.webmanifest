@@ -4,8 +4,8 @@
   "description": "東京・富士五湖 6 天 5 夜旅遊行程",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#E9E5DE",
-  "theme_color": "#6F8172",
+  "background_color": "#F5E9DD",
+  "theme_color": "#B5542E",
   "icons": [
     {
       "src": "icon-192.png",

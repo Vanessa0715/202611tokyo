@@ -125,21 +125,21 @@ export default function Packing() {
       {/* Essentials */}
       <div className="mx-4 md:mx-8 mt-4 md:mt-6">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs font-semibold text-[#6F8172] uppercase tracking-widest">✦ 重要準備</span>
+          <span className="text-xs font-semibold text-[#B5542E] uppercase tracking-widest">✦ 重要準備</span>
         </div>
         <div className="space-y-2 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
           {ESSENTIALS.map(item => (
             <button
               key={item.id}
               onClick={() => setDetail(item)}
-              className="w-full flex items-center gap-3 bg-oat rounded-2xl px-4 py-3.5 shadow-sm border border-[#6F8172]/30 text-left active:scale-[0.98] transition-transform"
+              className="w-full flex items-center gap-3 bg-oat rounded-2xl px-4 py-3.5 shadow-sm border border-[#B5542E]/30 text-left active:scale-[0.98] transition-transform"
             >
               <span className="text-xl flex-shrink-0">{item.icon}</span>
               <span className="flex-1 min-w-0">
                 <span className="block text-sm font-bold text-stone-700">{item.title}</span>
                 <span className="block text-xs text-stone-400 mt-0.5">{item.tagline}</span>
               </span>
-              <ChevronRight size={16} className="text-[#6F8172] flex-shrink-0" />
+              <ChevronRight size={16} className="text-[#B5542E] flex-shrink-0" />
             </button>
           ))}
         </div>
@@ -219,7 +219,7 @@ export default function Packing() {
             <div className="space-y-4">
               {detail.sections.map(sec => (
                 <div key={sec.heading}>
-                  <p className="text-xs font-semibold text-[#6F8172] uppercase tracking-widest mb-2">{sec.heading}</p>
+                  <p className="text-xs font-semibold text-[#B5542E] uppercase tracking-widest mb-2">{sec.heading}</p>
                   <ul className="space-y-2">
                     {sec.points.map((p, i) => (
                       <li key={i} className="flex items-start gap-2.5 text-sm text-stone-700 leading-relaxed">
@@ -237,7 +237,7 @@ export default function Packing() {
                 href={detail.link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-center bg-sage text-oat font-bold tracking-widest text-xs rounded-xl py-3 mt-5 shadow-[0_4px_10px_-4px_rgba(111,129,114,0.6)] active:scale-95 transition-transform"
+                className="block text-center bg-sage text-oat font-bold tracking-widest text-xs rounded-xl py-3 mt-5 shadow-[0_4px_10px_-4px_rgba(181,84,46,0.6)] active:scale-95 transition-transform"
               >
                 {detail.link.label}
               </a>

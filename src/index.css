@@ -2,13 +2,13 @@
 @import "tailwindcss";
 
 @theme {
-  /* 莫蘭迪「森の栞」色票 */
-  --color-sage: #6F8172;    /* 鼠尾草綠 · 主色 */
-  --color-mist: #AEBBAF;    /* 霧綠 · 線條 */
-  --color-latte: #AD8B76;   /* 奶茶棕 · 點綴 */
-  --color-cream: #E9E5DE;   /* 暖灰米 · 底色 */
-  --color-oat: #F4F1EB;     /* 燕麥白 · 卡片 */
-  --color-ink: #4A4A43;     /* 暖灰墨 · 文字 */
+  /* 「紅葉」楓紅色票（跟 202610nagoya 的鼠尾草綠系刻意區隔開） */
+  --color-sage: #B5542E;    /* 楓紅橙 · 主色（沿用 sage 這個 token 名稱，只是換了色值，省得全專案改 class 名） */
+  --color-mist: #E0C4A8;    /* 杏橘霧 · 線條 */
+  --color-latte: #B8863B;   /* 焦糖金 · 點綴 */
+  --color-cream: #F5E9DD;   /* 暖杏白 · 底色 */
+  --color-oat: #FBF3EA;     /* 米杏白 · 卡片 */
+  --color-ink: #43362B;     /* 深栗棕 · 文字 */
   --font-sans: 'Noto Sans TC', system-ui, sans-serif;
 }
 
@@ -17,7 +17,7 @@
 }
 
 body {
-  background-color: #E9E5DE;
+  background-color: #F5E9DD;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -52,8 +52,8 @@ body {
   position: absolute;
   right: 8px;
   bottom: -6px;
-  border: 1px solid #AD8B76;
-  color: #AD8B76;
+  border: 1px solid #B8863B;
+  color: #B8863B;
   transform: rotate(-5deg);
   padding: 2px 6px;
   font-size: 0.62rem;
