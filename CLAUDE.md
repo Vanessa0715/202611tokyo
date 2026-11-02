@@ -76,6 +76,10 @@ https://tour.colatour.com.tw/itinerary?TourCode=NTX111805BR6C&TourDate=2026/11/1
 
 `public/images/day1.jpg`～`day6.jpg` 已換成對應景點的真實照片（取自 Wikimedia Commons，CC BY / CC BY-SA 授權，皆已下載到本地），分別對應：桃園機場／成田山新勝寺／高尾山／河口湖富士山紅葉／東京鐵塔／成田機場。之後想換自己拍的照片，直接覆蓋同檔名即可，不要外連圖片。
 
+## App Icon
+
+`public/favicon.svg`、`icon-192.png`、`icon-512.png`、`apple-touch-icon.png` 是東京鐵塔造型（橙白配色），取自 Microsoft Fluent Emoji「🗼」圖案（MIT 授權，來源 Wikimedia Commons），跟 202610nagoya 的鳥居圖示明顯不同，手機桌面不會搞混。
+
 ## 本地開發流程
 
 ```bash
