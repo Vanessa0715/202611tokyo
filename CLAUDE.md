@@ -47,6 +47,8 @@ https://tour.colatour.com.tw/itinerary?TourCode=NTX111805BR6C&TourDate=2026/11/1
 
 初始行程資料（含景點介紹、候補飯店清單）已寫在 `scripts/seed.mjs`，來源為旅行社行程 PDF。**住宿飯店為旅行社候補清單（擇一同級旅館）**，實際入住飯店請依行前說明會資料更新。
 
+**⚠️ `scripts/seed.mjs` 只是初始種子資料，Firebase 上的實際內容已經過手動編輯（補了真實訂房資訊、官方景點圖片、更完整的介紹文字、機場商家參考文章等），兩邊已經不一致。不要再重新執行 `node scripts/seed.mjs`，會整批覆寫掉這些手動編輯的內容。之後要改資料請直接在網頁上改，或用 Firebase MCP 工具針對單一欄位路徑寫入。
+
 ## 部署設定
 
 - **平台：** GitHub Pages
