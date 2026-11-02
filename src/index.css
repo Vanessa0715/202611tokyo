@@ -1,0 +1,64 @@
+/* 字型改由 index.html 一次載入（Noto Sans TC + Noto Serif TC），避免 @import 卡住渲染 */
+@import "tailwindcss";
+
+@theme {
+  /* 莫蘭迪「森の栞」色票 */
+  --color-sage: #6F8172;    /* 鼠尾草綠 · 主色 */
+  --color-mist: #AEBBAF;    /* 霧綠 · 線條 */
+  --color-latte: #AD8B76;   /* 奶茶棕 · 點綴 */
+  --color-cream: #E9E5DE;   /* 暖灰米 · 底色 */
+  --color-oat: #F4F1EB;     /* 燕麥白 · 卡片 */
+  --color-ink: #4A4A43;     /* 暖灰墨 · 文字 */
+  --font-sans: 'Noto Sans TC', system-ui, sans-serif;
+}
+
+* {
+  font-family: 'Noto Sans TC', system-ui, sans-serif;
+}
+
+body {
+  background-color: #E9E5DE;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.font-serif {
+  font-family: 'Noto Serif TC', serif;
+}
+
+.no-scrollbar::-webkit-scrollbar,
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar,
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in  { animation: fadeIn  0.35s ease-out forwards; }
+.animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* Desktop modals are centered dialogs, so slide-up-from-bottom looks wrong — fade in instead */
+@media (min-width: 768px) {
+  .animate-slide-up { animation: fadeIn 0.25s ease-out forwards; }
+}
+
+.stamp-tag {
+  position: absolute;
+  right: 8px;
+  bottom: -6px;
+  border: 1px solid #AD8B76;
+  color: #AD8B76;
+  transform: rotate(-5deg);
+  padding: 2px 6px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.05em;
+}
