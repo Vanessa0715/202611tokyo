@@ -17,14 +17,13 @@ const TAG_STYLE = {
   自然: 'bg-[#7E9384]/20 text-[#54685A]',
 }
 
-// 排入行程用的日期選項（對應 itinerary/day{N}）
+// 排入行程用的日期選項（對應 itinerary/day{N}）；11/17 行前夜不算 DAY 1～5，資料在 /prep
 const DAY_OPTIONS = [
-  { day: 1, date: '11/17', place: '桃園' },
-  { day: 2, date: '11/18', place: '成田' },
-  { day: 3, date: '11/19', place: '昭和公園・高尾山' },
-  { day: 4, date: '11/20', place: '河口湖' },
-  { day: 5, date: '11/21', place: '東京鐵塔・明治神宮' },
-  { day: 6, date: '11/22', place: '返家之旅' },
+  { day: 1, date: '11/18', place: '成田' },
+  { day: 2, date: '11/19', place: '昭和公園・高尾山' },
+  { day: 3, date: '11/20', place: '河口湖' },
+  { day: 4, date: '11/21', place: '東京鐵塔・明治神宮' },
+  { day: 5, date: '11/22', place: '返家之旅' },
 ]
 
 const EMPTY_FORM = {

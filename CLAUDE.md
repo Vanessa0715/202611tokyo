@@ -32,7 +32,8 @@ VITE_FIREBASE_APP_ID=
 
 | 模組 | 說明 |
 |------|------|
-| 每日行程時間軸 | Day 1（11/17）～ Day 6（11/22），可新增/編輯景點、標籤 |
+| 每日行程時間軸 | DAY 1（11/18）～ DAY 5（11/22），可新增/編輯景點、標籤 |
+| 行前夜小卡 | 11/17（Firebase 路徑 `/prep`，跟 `itinerary/day1~5` 分開），**不算 DAY 1～5**——媽媽只是提早去桃園住一晚，不是出國第一天，避免跟旅行社導遊說的天數搞混。顯示在 DAY 選單上方，可收合，新增/編輯/刪除跟每日行程共用同一個 modal |
 | 打包清單（行李） | 共用提醒清單（項目同步、勾選各存各的手機）；項目固定，僅可刪除 |
 | 願望清單（原景點） | 共同許願池：想去想吃的備案小卡，可一鍵排入指定日期的行程（標記「已排入」） |
 
@@ -49,15 +50,17 @@ https://tour.colatour.com.tw/itinerary?TourCode=NTX111805BR6C&TourDate=2026/11/1
 
 **⚠️ `scripts/seed.mjs` 只是初始種子資料，Firebase 上的實際內容已經過手動編輯（補了真實訂房資訊、官方景點圖片、更完整的介紹文字、機場商家參考文章等），兩邊已經不一致。不要再重新執行 `node scripts/seed.mjs`，會整批覆寫掉這些手動編輯的內容。之後要改資料請直接在網頁上改，或用 Firebase MCP 工具針對單一欄位路徑寫入。
 
+**⚠️ Day 編號跟 seed.mjs 寫的也不一樣了**：原本 `itinerary/day1`＝11/17，後來改成 11/17 不算行程天數，整批搬家過一次——`itinerary/day1~5` 現在對應 11/18～11/22（DAY 1～5），11/17 的內容搬到獨立的 `/prep` 節點。`scripts/seed.mjs` 裡的 `tripData` 物件仍是舊的 6 天版本，純粹留著當歷史紀錄，不要照它的 day 編號去理解現在的資料結構。
+
 ## 部署設定
 
 - **平台：** GitHub Pages
-- **Repo：** `Vanessa0715/202611tokyo`（尚未建立遠端 repo）
+- **Repo：** `Vanessa0715/202611tokyo`
 - **CI/CD：** `.github/workflows/deploy.yml`，push to `main` 自動 build & deploy
 - **發布網址：** https://vanessa0715.github.io/202611tokyo/
 - **base path：** `vite.config.js` 已設 `base: '/202611tokyo/'`
-- **GitHub Secrets：** 需設定 7 個 `VITE_FIREBASE_*`（比照 202610nagoya 流程）
-- **GitHub Pages：** 需啟用（Source: GitHub Actions）
+- **GitHub Secrets：** 7 個 `VITE_FIREBASE_*` 已設定完成
+- **GitHub Pages：** 已啟用（Source: GitHub Actions）
 
 ## 原始碼對應區塊
 
@@ -74,7 +77,7 @@ https://tour.colatour.com.tw/itinerary?TourCode=NTX111805BR6C&TourDate=2026/11/1
 
 ## Hero 圖片
 
-`public/images/day1.jpg`～`day6.jpg` 已換成對應景點的真實照片（取自 Wikimedia Commons，CC BY / CC BY-SA 授權，皆已下載到本地），分別對應：桃園機場／成田山新勝寺／高尾山／河口湖富士山紅葉／東京鐵塔／成田機場。之後想換自己拍的照片，直接覆蓋同檔名即可，不要外連圖片。
+`public/images/day1.jpg`～`day6.jpg` 已換成對應景點的真實照片（取自 Wikimedia Commons，CC BY / CC BY-SA 授權，皆已下載到本地）。11/17 改成行前夜小卡後，`day1.jpg`（桃園機場照）目前沒有被用到；`day2.jpg`～`day6.jpg` 依序對應 DAY 1～5（成田山新勝寺／高尾山／河口湖富士山紅葉／東京鐵塔／成田機場）。之後想換自己拍的照片，直接覆蓋同檔名即可，不要外連圖片。
 
 ## App Icon
 

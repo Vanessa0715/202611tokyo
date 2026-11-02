@@ -34,10 +34,9 @@ function useTonightHotel(dayIndex) {
   return hotel
 }
 
+// 11/17 桃園行前夜不算行程天數（避免跟旅行社導遊說的 DAY 1～5 搞混），
+// 獨立放在 /prep，另外用 PrepNightCard 顯示；這裡只放真正出國的 DAY 1～5（11/18～11/22）
 const DAY_DATA = [
-  { week: 'TUE', date: '11/17', subtitle: '桃園', en: 'TAOYUAN', desc: '行前夜，養精蓄銳',
-    image: `${import.meta.env.BASE_URL}images/day1.jpg`,
-    lat: 25.0777, lon: 121.2325 },
   { week: 'WED', date: '11/18', subtitle: '成田', en: 'NARITA', desc: '飛抵東京，寺院散策',
     image: `${import.meta.env.BASE_URL}images/day2.jpg`,
     lat: 35.7647, lon: 140.3864 },
@@ -70,11 +69,12 @@ function useNowJST() {
   return now
 }
 
-// 開啟 App 時預設顯示的日期：日本時間落在 2026/11/17～11/22 之間就自動定位到當天，否則預設第一天
+// 開啟 App 時預設顯示的日期：日本時間落在 2026/11/18～11/22（DAY 1～5）之間就自動定位到當天，
+// 11/17（行前夜）或範圍外一律預設顯示 DAY 1
 function getDefaultDay() {
   const jst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }))
-  if (jst.getFullYear() === 2026 && jst.getMonth() === 10 && jst.getDate() >= 17 && jst.getDate() <= 22) {
-    return jst.getDate() - 17
+  if (jst.getFullYear() === 2026 && jst.getMonth() === 10 && jst.getDate() >= 18 && jst.getDate() <= 22) {
+    return jst.getDate() - 18
   }
   return 0
 }
@@ -228,7 +228,8 @@ const EMPTY_FORM = {
   mapUrl: '', address: '', phone: '', website: '', articles: '', reservationNo: '', details: '', image: '',
 }
 
-function useItems(day) {
+// path 直接是 Firebase 節點路徑，例如 `itinerary/day2` 或 `prep`（11/17 行前夜，不算在 DAY 1～5 裡）
+function useItems(path) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -239,7 +240,7 @@ function useItems(day) {
     let unsub = () => {}
     authReady.then(() => {
       if (cancelled) return
-      const r = ref(db, `itinerary/day${day}`)
+      const r = ref(db, path)
       unsub = onValue(r, (snap) => {
         const data = snap.val()
         setItems(
@@ -256,13 +257,13 @@ function useItems(day) {
       cancelled = true
       unsub()
     }
-  }, [day])
+  }, [path])
 
   return {
     items, loading,
-    add:    (item) => push(ref(db, `itinerary/day${day}`), item),
-    update: (id, item) => set(ref(db, `itinerary/day${day}/${id}`), item),
-    del:    (id) => remove(ref(db, `itinerary/day${day}/${id}`)),
+    add:    (item) => push(ref(db, path), item),
+    update: (id, item) => set(ref(db, `${path}/${id}`), item),
+    del:    (id) => remove(ref(db, `${path}/${id}`)),
   }
 }
 
@@ -275,31 +276,87 @@ function itemToForm(item) {
   }
 }
 
+// 11/17 行前夜：不算 DAY 1～5，獨立放在最上面的小卡，資料存在 Firebase /prep，
+// 跟每日行程共用同一個檢視/新增/編輯 modal（openView/openNew 的 source 參數傳 'prep'）
+function PrepNightCard({ items, loading, onOpen, onNew }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="mx-5 md:mx-8 mt-4 mb-1">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex justify-between items-center px-4 py-3 bg-[#F4F1EB] rounded-xl border border-[#DED9CF] active:opacity-80 transition-opacity"
+      >
+        <span className="text-sm font-bold text-[#43473F] tracking-wide">🛫 11/17 行前夜</span>
+        <span className="flex items-center gap-2 text-[0.7rem] text-[#A5998A]">
+          {loading ? '' : `${items.length} 筆`}
+          <span className="text-[#C5BAA8]">{open ? '▲' : '▼'}</span>
+        </span>
+      </button>
+      {open && (
+        <div className="mt-1.5 bg-[#F4F1EB] border border-[#DED9CF] rounded-xl p-3 animate-fade-in space-y-2">
+          {loading ? (
+            <p className="text-center text-stone-300 text-xs py-4">載入中⋯</p>
+          ) : items.length === 0 ? (
+            <p className="text-center text-stone-300 text-xs py-4">還沒有行前夜的安排</p>
+          ) : (
+            items.map(item => (
+              <button
+                key={item.id}
+                onClick={() => onOpen(item, 'prep')}
+                className="w-full flex items-center gap-3 bg-oat rounded-lg px-3 py-2.5 shadow-sm border border-[#E2DCD1] text-left active:scale-[0.98] transition-transform"
+              >
+                <span className="text-[0.78rem] font-bold text-[#4A4A43] font-mono shrink-0">{item.time || '--:--'}</span>
+                <span className="flex-1 min-w-0 text-[0.82rem] text-[#43473F] truncate">{item.title}</span>
+                {item.tag && (
+                  <span className={`text-[0.55rem] tracking-widest px-1.5 py-[1px] rounded-[3px] border shrink-0 ${getTagStyle(item.tag)}`}>
+                    {item.tag}
+                  </span>
+                )}
+              </button>
+            ))
+          )}
+          <button
+            onClick={() => onNew('prep')}
+            className="w-full py-2 border border-dashed border-[#C4BCAC] text-[#A5998A] rounded-lg text-xs tracking-widest hover:bg-white transition-colors"
+          >
+            + 新增行前夜安排
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Itinerary() {
   const [activeDay, setActiveDay] = useState(getDefaultDay)
-  const { items, loading, add, update, del } = useItems(activeDay + 1)
+  const { items, loading, add, update, del } = useItems(`itinerary/day${activeDay + 1}`)
+  const prep = useItems('prep')  // 11/17 行前夜，獨立於 DAY 1～5 之外
 
-  const [viewItem, setViewItem]   = useState(null)  // null = modal closed
+  const [viewItem, setViewItem]   = useState(null)  // null = modal關閉
   const [editMode, setEditMode]   = useState(false)  // true = edit form visible
   const [isNew, setIsNew]         = useState(false)
   const [form, setForm]           = useState(EMPTY_FORM)
+  const [viewSource, setViewSource] = useState('day')  // 'day' | 'prep'：目前檢視/編輯的項目屬於哪個集合
 
   const day = DAY_DATA[activeDay]
 
-  const openView  = (item) => { setViewItem(item); setEditMode(false); setIsNew(false) }
+  const openView  = (item, source = 'day') => { setViewItem(item); setEditMode(false); setIsNew(false); setViewSource(source) }
   const startEdit = ()     => { setForm(itemToForm(viewItem)); setEditMode(true) }
-  const openNew   = ()     => { setViewItem({}); setForm(EMPTY_FORM); setEditMode(true); setIsNew(true) }
+  const openNew   = (source = 'day') => { setViewItem({}); setForm(EMPTY_FORM); setEditMode(true); setIsNew(true); setViewSource(source) }
   const closeModal = ()    => { setViewItem(null); setEditMode(false); setIsNew(false) }
 
   const handleSave = async () => {
     if (!form.title.trim()) return
-    if (isNew) { await add(form) } else { await update(viewItem.id, form) }
+    const { add: addFn, update: updateFn } = viewSource === 'prep' ? prep : { add, update }
+    if (isNew) { await addFn(form) } else { await updateFn(viewItem.id, form) }
     closeModal()
   }
 
   const handleDelete = async () => {
     if (!window.confirm('確定要刪除這個行程嗎？')) return
-    await del(viewItem.id)
+    const delFn = viewSource === 'prep' ? prep.del : del
+    await delFn(viewItem.id)
     closeModal()
   }
 
@@ -310,7 +367,7 @@ export default function Itinerary() {
   const nowJST = useNowJST()
   const hhmm = `${String(nowJST.getHours()).padStart(2, '0')}:${String(nowJST.getMinutes()).padStart(2, '0')}`
   const isToday =
-    nowJST.getFullYear() === 2026 && nowJST.getMonth() === 9 && nowJST.getDate() === activeDay + 1
+    nowJST.getFullYear() === 2026 && nowJST.getMonth() === 10 && nowJST.getDate() === activeDay + 18
   let curIdx = 0
   if (isToday && items.length > 0) {
     const passed = items.filter(it => (it.time || '00:00') <= hhmm).length
@@ -321,9 +378,9 @@ export default function Itinerary() {
 
   // 「今晚住宿」：行程期間以日本日期為準（清晨 6 點前算前一晚），期間外看目前檢視的天
   let hotelIdx = activeDay
-  if (nowJST.getFullYear() === 2026 && nowJST.getMonth() === 9) {
+  if (nowJST.getFullYear() === 2026 && nowJST.getMonth() === 10) {
     const d = nowJST.getDate() - (nowJST.getHours() < 6 ? 1 : 0)
-    if (d >= 1 && d <= 6) hotelIdx = d - 1
+    if (d >= 18 && d <= 22) hotelIdx = d - 18
   }
   const hotel = useTonightHotel(hotelIdx)
 
@@ -370,6 +427,9 @@ export default function Itinerary() {
 
   return (
     <div>
+      {/* 行前夜（11/17，不算 DAY 1～5） */}
+      <PrepNightCard items={prep.items} loading={prep.loading} onOpen={openView} onNew={openNew} />
+
       {/* Day selector */}
       <div ref={daySelectorRef} className="sticky top-[94px] md:top-[72px] z-20 bg-cream border-b border-[#D6D0C4]">
         <div className="flex gap-1.5 md:gap-2 md:max-w-lg md:mx-auto px-5 py-3">
@@ -508,7 +568,7 @@ export default function Itinerary() {
         )}
 
         <button
-          onClick={openNew}
+          onClick={() => openNew('day')}
           className="w-full py-3 border border-dashed border-[#C4BCAC] text-[#A5998A] rounded-xl text-sm tracking-widest flex items-center justify-center gap-2 hover:bg-[#F4F1EB] transition-colors mt-2"
         >
           + 新增行程
