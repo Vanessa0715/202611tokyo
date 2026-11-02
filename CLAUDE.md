@@ -72,7 +72,7 @@ https://tour.colatour.com.tw/itinerary?TourCode=NTX111805BR6C&TourDate=2026/11/1
 
 ## Hero 圖片
 
-`public/images/day1.jpg`～`day6.jpg` 目前是從 202610nagoya 複製過來的佔位圖（名古屋/高山照片），**待換成東京/富士五湖/河口湖相關圖片**，不要外連圖片，直接換檔放同路徑即可。
+`public/images/day1.jpg`～`day6.jpg` 已換成對應景點的真實照片（取自 Wikimedia Commons，CC BY / CC BY-SA 授權，皆已下載到本地），分別對應：桃園機場／成田山新勝寺／高尾山／河口湖富士山紅葉／東京鐵塔／成田機場。之後想換自己拍的照片，直接覆蓋同檔名即可，不要外連圖片。
 
 ## 本地開發流程
 
