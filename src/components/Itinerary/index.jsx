@@ -58,45 +58,6 @@ const DAY_DATA = [
 const CN_NUMS = ['一', '二', '三', '四', '五', '六']
 const WEEK_CN = { MON: '一', TUE: '二', WED: '三', THU: '四', FRI: '五', SAT: '六', SUN: '日' }
 
-// 每日路線總覽：大點依序排列，方位依真實地理相對關係手繪示意（非精確比例）；
-// 本團為跟團行程（遊覽車接送），里程/時間為查詢旅遊資訊整理出的概略值，非逐段精算路線，僅供參考
-const ROUTES = [
-  { dist: '桃園 → 住宿', w: 600, h: 300, stops: [
-    { name: '桃園機場', x: 440, y: 220 },
-    { name: '桃園住宿', x: 200, y: 110 },
-  ]},
-  { dist: '約 10km・20min', w: 600, h: 420, stops: [
-    { name: '成田機場',     x: 500, y: 340 },
-    { name: '成田山新勝寺', x: 320, y: 220 },
-    { name: 'AEON MALL',    x: 220, y: 130 },
-    { name: '成田飯店',     x: 120, y: 60  },
-  ]},
-  { dist: '約 180km・3h30m', w: 600, h: 460, stops: [
-    { name: '成田飯店',     x: 540, y: 80  },
-    { name: '昭和紀念公園', x: 340, y: 200 },
-    { name: '高尾山',       x: 230, y: 300 },
-    { name: '富士五湖溫泉區', x: 90, y: 400 },
-  ]},
-  { dist: '約 40km・1h20m（環狀）', w: 600, h: 420, stops: [
-    { name: '富士五湖溫泉區', x: 500, y: 350, anchor: 'start', vAlign: 'below' },
-    { name: '河口湖紅葉迴廊', x: 360, y: 220 },
-    { name: '天晴號遊覽船',   x: 280, y: 150 },
-    { name: '麗莎與卡斯柏小鎮', x: 180, y: 100 },
-    { name: '忍野八海',       x: 120, y: 250 },
-    { x: 500, y: 350, pathOnly: true },
-  ]},
-  { dist: '約 110km・2h00m', w: 600, h: 440, stops: [
-    { name: '富士五湖溫泉區', x: 540, y: 360 },
-    { name: '光伸真珠',       x: 400, y: 260 },
-    { name: '東京鐵塔',       x: 260, y: 150 },
-    { name: '明治神宮',       x: 160, y: 100 },
-    { name: '東京飯店',       x: 90,  y: 60  },
-  ]},
-  { dist: '約 70km・1h10m', w: 600, h: 300, stops: [
-    { name: '東京飯店', x: 480, y: 220 },
-    { name: '成田機場', x: 200, y: 110 },
-  ]},
-]
 
 // 日本時間，每 30 秒更新一次
 function useNowJST() {
@@ -256,145 +217,6 @@ function WeatherWidget({ lat, lon }) {
             <p className="text-[0.52rem] text-[#A5998A] tracking-[0.2em] uppercase font-bold mb-1">Outfit Guide</p>
             <p className="text-[0.82rem] text-[#6B685C] leading-relaxed">{outfit.text}</p>
           </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// 路線地圖標籤寬度用實際文字量測（混合中日文/數字時比固定字元估算準確）
-const measureCanvas = document.createElement('canvas')
-const measureCtx = measureCanvas.getContext('2d')
-function labelWidth(text) {
-  measureCtx.font = '700 29px "Noto Sans TC","PingFang TC",sans-serif'
-  return measureCtx.measureText(text).width
-}
-
-function smoothRoutePath(pts) {
-  if (pts.length < 2) return ''
-  let d = `M ${pts[0].x} ${pts[0].y}`
-  for (let i = 0; i < pts.length - 1; i++) {
-    const cur = pts[i], next = pts[i + 1]
-    const midX = (cur.x + next.x) / 2, midY = (cur.y + next.y) / 2
-    d += i === 0 ? ` Q ${cur.x} ${cur.y}, ${midX} ${midY}` : ` T ${midX} ${midY}`
-  }
-  const last = pts[pts.length - 1]
-  d += ` T ${last.x} ${last.y}`
-  return d
-}
-
-// 等高線地形紋理：同心、帶雜訊擾動的封閉曲線模擬地圖等高線，呼應中部山岳地形
-function drawRouteTerrain(canvas) {
-  const ctx = canvas.getContext('2d')
-  const w = canvas.width, h = canvas.height
-  ctx.clearRect(0, 0, w, h)
-  ctx.fillStyle = '#F4F1EB'
-  ctx.fillRect(0, 0, w, h)
-
-  ctx.fillStyle = 'rgba(111,129,114,0.09)'
-  for (let y = 14; y < h; y += 26) {
-    for (let x = 14; x < w; x += 26) {
-      ctx.beginPath(); ctx.arc(x, y, 1, 0, Math.PI * 2); ctx.fill()
-    }
-  }
-
-  const lineColor = 'rgba(111,129,114,0.20)'
-  const contourCluster = (cx, cy, baseR, rings, seed) => {
-    for (let i = 0; i < rings; i++) {
-      const r = baseR + i * 20
-      ctx.beginPath()
-      for (let a = 0; a <= Math.PI * 2 + 0.05; a += 0.12) {
-        const noise = Math.sin(a * 3 + seed + i * 1.3) * 9 + Math.sin(a * 5 + seed * 1.7) * 5
-        const rad = r + noise
-        const x = cx + Math.cos(a) * rad
-        const y = cy + Math.sin(a) * rad * 0.72
-        if (a === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y)
-      }
-      ctx.closePath()
-      ctx.strokeStyle = lineColor
-      ctx.lineWidth = 1.1
-      ctx.stroke()
-    }
-  }
-  const clusters = [[w * 0.22, h * 0.16, 55], [w * 0.80, h * 0.26, 60], [w * 0.72, h * 0.78, 50], [w * 0.20, h * 0.82, 48]]
-  clusters.forEach(([x, y, r], i) => contourCluster(x, y, r, 3, i * 1.9))
-
-  const peak = (x, y, s) => {
-    ctx.beginPath()
-    ctx.moveTo(x, y - s); ctx.lineTo(x + s * 0.8, y + s * 0.5); ctx.lineTo(x - s * 0.8, y + s * 0.5)
-    ctx.closePath(); ctx.strokeStyle = lineColor; ctx.lineWidth = 1.2; ctx.stroke()
-  }
-  clusters.forEach(([x, y]) => peak(x, y - 4, 13))
-}
-
-const ROUTE_PIN_R = 26
-
-function RouteMap({ route }) {
-  const canvasRef = useRef(null)
-  useEffect(() => { drawRouteTerrain(canvasRef.current) }, [route])
-
-  return (
-    <div className="relative rounded-[10px] overflow-hidden">
-      <canvas ref={canvasRef} width={route.w} height={route.h} className="block w-full h-auto" />
-      <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${route.w} ${route.h}`} preserveAspectRatio="none">
-        <path
-          d={smoothRoutePath(route.stops)}
-          fill="none" stroke="#6F8172" strokeWidth="4.2" strokeDasharray="11 9"
-          strokeLinecap="round" opacity="0.9"
-        />
-        {(() => {
-          let pinNum = 0
-          return route.stops.map((s, i) => {
-            if (s.pathOnly) return null // 只用來畫路線形狀（例如迴圈終點＝出發點），不重複畫針
-            pinNum += 1
-            const nearRight = s.x > route.w * 0.62
-            const nearTop = s.y < route.h * 0.16
-            const anchor = s.anchor || (nearRight ? 'end' : 'start')
-            const vAlign = s.vAlign || (nearTop ? 'below' : 'above')
-            const dx = anchor === 'end' ? -(ROUTE_PIN_R + 8) : (ROUTE_PIN_R + 8)
-            const dy = vAlign === 'below' ? (ROUTE_PIN_R + 22) : -(ROUTE_PIN_R + 8)
-            const textX = s.x + dx, textY = s.y + dy
-            const estW = labelWidth(s.name) + 26
-            const rectX = anchor === 'end' ? textX - estW + 12 : textX - 12
-            const rectY = vAlign === 'below' ? textY - 24 : textY - 38
-            return (
-              <g key={i}>
-                <circle cx={s.x} cy={s.y} r={ROUTE_PIN_R} fill="#6F8172" stroke="#fff" strokeWidth="3.5" />
-                <text x={s.x} y={s.y + 1} textAnchor="middle" dominantBaseline="central" fontSize="22" fontWeight="700" fill="#fff">
-                  {pinNum}
-                </text>
-                <rect x={rectX} y={rectY} width={estW} height="50" rx="14" fill="#fff" opacity="0.6" />
-                <text x={textX} y={textY} textAnchor={anchor} fontSize="29" fontWeight="700" fill="#4A4A43">
-                  {s.name}
-                </text>
-              </g>
-            )
-          })
-        })()}
-      </svg>
-    </div>
-  )
-}
-
-function RouteOverview({ route }) {
-  const [open, setOpen] = useState(false)
-  if (!route) return null
-
-  return (
-    <div className="mx-5 md:mx-0 mb-4">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex justify-between items-center px-4 py-3 bg-[#F4F1EB] rounded-xl border border-[#DED9CF] active:opacity-80 transition-opacity"
-      >
-        <span className="text-sm font-bold text-[#43473F] tracking-wide">🧭 今日路線</span>
-        <span className="flex items-center gap-2 text-[0.7rem] text-[#A5998A]">
-          {route.dist}
-          <span className="text-[#C5BAA8]">{open ? '▲' : '▼'}</span>
-        </span>
-      </button>
-      {open && (
-        <div className="mt-1.5 bg-[#F4F1EB] border border-[#DED9CF] rounded-xl p-3 animate-fade-in">
-          <RouteMap route={route} />
         </div>
       )}
     </div>
@@ -606,8 +428,6 @@ export default function Itinerary() {
       {/* Weather widget */}
       <WeatherWidget lat={day.lat} lon={day.lon} />
 
-      {/* Route overview */}
-      <RouteOverview route={ROUTES[activeDay]} key={activeDay} />
       </div>
 
       {/* Timeline */}
