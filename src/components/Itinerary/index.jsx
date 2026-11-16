@@ -162,7 +162,7 @@ function useWeather(lat, lon) {
     fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
       `&hourly=temperature_2m,weathercode&current_weather=true` +
-      `&timezone=Asia%2FTokyo&forecast_days=2`
+      `&timezone=Asia%2FTokyo&forecast_days=10`
     )
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false) })
